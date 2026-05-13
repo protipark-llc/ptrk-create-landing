@@ -1,0 +1,118 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   VARIABLES CSS - SISTEMA DE DISEÑO PROTIPARK
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+:root {
+  /* ─ PALETA DE COLORES ─ */
+
+  /* Azules */
+  --navy:      #0d1240;    /* Azul muy oscuro - Fondos principales */
+  --navy2:     #161b55;    /* Azul oscuro - Variante */
+  --blue:      #3b47d4;    /* Azul principal - CTAs */
+  --blue2:     #4f5ce0;    /* Azul claro - Acentos */
+  --cyan:      #00d4ff;    /* Cian - Énfasis */
+
+  /* Verdes */
+  --green:     #00c896;    /* Verde - Success */
+
+  /* Amarillos y rojos */
+  --amber:     #f5a623;    /* Ámbar - Warning */
+  --red:       #e84040;    /* Rojo - Danger */
+
+  /* Púrpura */
+  --purple:    #8b5cf6;    /* Púrpura - Info */
+
+  /* Neutros */
+  --text:      #0d1240;    /* Texto principal */
+  --text2:     #4a5280;    /* Texto secundario */
+  --muted:     #8892c8;    /* Texto mutado */
+  --gray:      #9ca3c8;    /* Gris neutral */
+  --off:       #f0f1fa;    /* Off-white - Fondo claro */
+
+  /* Transparencias */
+  --border:    rgba(59, 71, 212, 0.13);   /* Borde sutil */
+  --border2:   rgba(59, 71, 212, 0.30);   /* Borde más visible */
+  --overlay:   rgba(13, 18, 64, 0.92);    /* Overlay oscuro */
+
+  /* ─ ESPACIADO ─ */
+  --spacing-xs:  4px;
+  --spacing-sm:  8px;
+  --spacing-md:  16px;
+  --spacing-lg:  24px;
+  --spacing-xl:  32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* ─ TIPOGRAFÍA ─ */
+  --font-primary:   'Outfit', sans-serif;
+  --font-mono:      'JetBrains Mono', monospace;
+
+  --font-size-xs:   0.75rem;    /* 12px */
+  --font-size-sm:   0.875rem;   /* 14px */
+  --font-size-base: 1rem;       /* 16px */
+  --font-size-lg:   1.25rem;    /* 20px */
+  --font-size-xl:   1.5rem;     /* 24px */
+  --font-size-2xl:  1.875rem;   /* 30px */
+  --font-size-3xl:  2.25rem;    /* 36px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:    700;
+  --font-weight-extrabold: 800;
+  --font-weight-black:   900;
+
+  /* ─ RADIOS ─ */
+  --radius:     14px;   /* Bordes grandes */
+  --radius2:    10px;   /* Bordes medianos */
+  --radius-sm:  6px;    /* Bordes pequeños */
+  --radius-full: 100px; /* Completamente redondeado */
+
+  /* ─ SOMBRAS ─ */
+  --shadow:     0 8px 40px rgba(13, 18, 64, 0.11);
+  --shadow-sm:  0 4px 24px rgba(13, 18, 64, 0.09);
+  --shadow-lg:  0 16px 60px rgba(13, 18, 64, 0.15);
+
+  /* ─ TRANSICIONES ─ */
+  --transition-fast:   0.15s ease;
+  --transition-base:   0.2s ease;
+  --transition-slow:   0.3s ease;
+  --transition-slower: 0.5s ease;
+
+  /* ─ BREAKPOINTS (para media queries) ─ */
+  --breakpoint-sm:  640px;   /* Mobile grande */
+  --breakpoint-md:  768px;   /* Tablet */
+  --breakpoint-lg:  1024px;  /* Desktop */
+  --breakpoint-xl:  1280px;  /* Desktop grande */
+  --breakpoint-2xl: 1536px;  /* Desktop muy grande */
+
+  /* ─ Z-INDEX ─ */
+  --z-dropdown:  10;
+  --z-sticky:    20;
+  --z-fixed:     30;
+  --z-modal:     40;
+  --z-popover:   50;
+  --z-tooltip:   60;
+
+  /* ─ COLORES FUNCIONALES (aliases) ─ */
+  --color-primary:      var(--blue);
+  --color-primary-dark: var(--navy);
+  --color-success:      var(--green);
+  --color-warning:      var(--amber);
+  --color-danger:       var(--red);
+  --color-info:         var(--purple);
+  --color-text:         var(--text);
+  --color-text-secondary: var(--text2);
+  --color-background:   #fff;
+  --color-background-secondary: var(--off);
+}
+
+/* ─ MODO OSCURO (opcional) ─ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f0f1fa;
+    --text2: #b5b9d8;
+    --color-background: var(--navy);
+    --color-background-secondary: var(--navy2);
+  }
+}

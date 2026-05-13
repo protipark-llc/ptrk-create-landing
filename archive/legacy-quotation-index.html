@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protipark Create — Cotización</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="../../shared/styles/variables.css">
+  <link rel="stylesheet" href="../../shared/styles/global.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="quotation-app">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-grid"></div>
+      <nav class="hero-nav">
+        <a href="#" class="logo-wrap">
+          <span class="logo-name">PROTIPARK CREATE</span>
+          <span class="logo-sub">Cotización</span>
+        </a>
+        <span class="hero-badge-nav">v1.0</span>
+      </nav>
+
+      <div class="hero-content">
+        <div class="hero-eyebrow">Generador de Cotizaciones</div>
+        <h1 class="hero-title">
+          Cotiza <span class="grad">proyectos de estacionamiento</span> en minutos
+        </h1>
+        <p class="hero-desc">
+          Crea presupuestos profesionales, genera reportes en Excel y PDF, y mantén un registro de todas tus cotizaciones.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-hero-primary" id="btn-scroll-to-form">
+            Crear Cotización
+            <span>→</span>
+          </button>
+          <button class="btn-hero-ghost" id="btn-cargar-muestra">
+            Ver Ejemplo
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formulario -->
+    <section class="quotation-form-section" id="form-section">
+      <div class="container">
+        <div class="form-header">
+          <h2>Nueva Cotización</h2>
+          <p>Completa los datos del proyecto para generar el presupuesto</p>
+        </div>
+
+        <form id="quotation-form" class="quotation-form">
+          <!-- Cliente -->
+          <fieldset class="form-group">
+            <legend>Información del Cliente</legend>
+            <div class="form-grid">
+              <input type="text" placeholder="Nombre del cliente" name="clientName" required>
+              <input type="email" placeholder="Email" name="clientEmail">
+              <input type="tel" placeholder="Teléfono" name="clientPhone">
+              <input type="text" placeholder="Empresa" name="clientCompany">
+            </div>
+          </fieldset>
+
+          <!-- Proyecto -->
+          <fieldset class="form-group">
+            <legend>Detalles del Proyecto</legend>
+            <div class="form-grid">
+              <input type="text" placeholder="Nombre del proyecto" name="projectName" required>
+              <input type="text" placeholder="Ubicación" name="projectLocation">
+              <input type="number" placeholder="Cantidad de espacios" name="spaces" min="1">
+              <select name="projectType">
+                <option value="">Tipo de proyecto</option>
+                <option value="parking">Estacionamiento subterráneo</option>
+                <option value="surface">Estacionamiento de superficie</option>
+                <option value="smart">Sistema inteligente</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <!-- Presupuesto -->
+          <fieldset class="form-group">
+            <legend>Presupuesto</legend>
+            <div class="form-grid">
+              <input type="number" placeholder="Costo unitario (S/)" name="unitCost" step="0.01">
+              <input type="number" placeholder="% Descuento" name="discount" min="0" max="100" value="0">
+              <input type="number" placeholder="% IGV" name="igv" min="0" max="100" value="18">
+            </div>
+          </fieldset>
+
+          <!-- Notas -->
+          <fieldset class="form-group">
+            <legend>Notas Adicionales</legend>
+            <textarea name="notes" placeholder="Comentarios, especificaciones especiales, etc."></textarea>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Generar Cotización</button>
+            <button type="button" class="btn-secondary" id="btn-limpiar-form">Limpiar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Cotizaciones previas -->
+    <section class="quotations-list-section" id="quotations-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Historial de Cotizaciones</h2>
+          <button class="btn-outline" id="btn-exportar-todas">Exportar todas</button>
+        </div>
+
+        <div id="quotations-list" class="quotations-grid">
+          <p class="empty-state">Sin cotizaciones aún. ¡Crea la primera!</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="../../shared/utils/storage.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

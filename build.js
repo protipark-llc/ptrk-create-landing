@@ -24,18 +24,27 @@ async function copyDir(src, dest) {
   }
 }
 
-async function build() {
-  await rm(distDir, { recursive: true, force: true });
-  await mkdir(distDir, { recursive: true });
-  await copyDir(publicDir, distDir);
-  console.log('✅  Build completo: public/ -> dist/');
+async function build(outputDir = distDir) {
+  if (outputDir === distDir) {
+    await rm(distDir, { recursive: true, force: true });
+    await mkdir(distDir, { recursive: true });
+  } else {
+    await mkdir(outputDir, { recursive: true });
+  }
+  await copyDir(publicDir, outputDir);
+  const label = outputDir === distDir ? 'dist/' : outputDir;
+  console.log(`✅  Build completo: public/ -> ${label}`);
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const watchMode = args.includes('--watch');
+  const outputFlagIndex = args.indexOf('--output');
+  const outputDir = outputFlagIndex !== -1 && args[outputFlagIndex + 1]
+    ? resolve(__dirname, args[outputFlagIndex + 1])
+    : distDir;
 
-  await build();
+  await build(outputDir);
 
   if (watchMode) {
     console.log('👀  Modo watch activo. Observando cambios en public/ ...');

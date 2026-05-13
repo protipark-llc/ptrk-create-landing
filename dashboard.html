@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protipark Create — Dashboard Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0d1240;--navy2:#161b55;--blue:#3b47d4;--blue2:#4f5ce0;
+  --cyan:#00d4ff;--off:#f0f1fa;--muted:#8892c8;--border:rgba(59,71,212,0.13);
+  --border2:rgba(59,71,212,0.28);--text:#0d1240;--text2:#4a5280;
+  --green:#00c896;--amber:#f5a623;--red:#e84040;--purple:#8b5cf6;
+  --radius:14px;--shadow:0 4px 24px rgba(13,18,64,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Outfit',sans-serif;background:var(--off);color:var(--text);min-height:100vh}
+
+/* ─ LAYOUT ─ */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+
+/* ─ SIDEBAR ─ */
+.sidebar{background:var(--navy);display:flex;flex-direction:column;padding:0;
+  position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;gap:11px;}
+.sb-logo-circle{width:36px;height:36px;border-radius:50%;background:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-weight:900;
+  font-size:1rem;color:#fff;flex-shrink:0;}
+.sb-logo-text .nm{font-weight:800;font-size:.95rem;color:#fff;}
+.sb-logo-text .sub{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.sb-nav{padding:16px 12px;flex:1;}
+.sb-section{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:6px;margin-top:14px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;
+  font-size:.84rem;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;
+  transition:all .2s;text-decoration:none;margin-bottom:2px;}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sb-item.active{background:rgba(59,71,212,.5);color:#fff;font-weight:600;}
+.sb-item .ico{font-size:1rem;width:20px;text-align:center;}
+.sb-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);
+  font-size:.72rem;color:rgba(255,255,255,.3);}
+.sb-footer a{color:rgba(255,255,255,.5);text-decoration:none;}
+
+/* ─ MAIN ─ */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.topbar{padding:18px 28px;background:#fff;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;}
+.topbar h1{font-size:1.3rem;font-weight:800;color:var(--navy);letter-spacing:-.02em;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.tb-badge{font-size:.72rem;font-weight:600;background:rgba(0,200,150,.1);
+  border:1px solid rgba(0,200,150,.28);color:#009970;padding:5px 12px;border-radius:100px;}
+.tb-btn{font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:700;
+  padding:8px 16px;border-radius:9px;cursor:pointer;border:none;transition:all .2s;
+  display:flex;align-items:center;gap:6px;}
+.tb-primary{background:var(--blue);color:#fff;}
+.tb-primary:hover{background:#2c38c0;}
+.tb-outline{background:transparent;color:var(--blue);border:1.5px solid var(--border2);}
+.tb-outline:hover{background:var(--off);}
+
+/* ─ CONTENT ─ */
+.content{padding:24px 28px;flex:1;overflow-y:auto;}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .25s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─ KPI CARDS ─ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.kpi{background:#fff;border-radius:var(--radius);border:1px solid var(--border);
+  padding:18px 20px;box-shadow:var(--shadow);}
+.kpi-label{font-size:.72rem;font-weight:600;color:var(--text2);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.kpi-val{font-size:2rem;font-weight:900;color:var(--navy);letter-spacing:-.03em;font-family:'JetBrains Mono',monospace;}
+.kpi-sub{font-size:.76rem;color:var(--muted);margin-top:4px;}
+.kpi-accent{border-left:3px solid var(--blue);}
+.kpi-green{border-left:3px solid var(--green);}
+.kpi-amber{border-left:3px solid var(--amber);}
+.kpi-purple{border-left:3px solid var(--purple);}
+
+/* ─ CHARTS GRID ─ */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+.chart-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);
+  padding:20px;box-shadow:var(--shadow);}
+.chart-card.full{grid-column:1/-1;}
+.cc-title{font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:14px;
+  display:flex;align-items:center;gap:7px;}
+.cc-title span{font-size:1rem;}
+
+/* ─ BAR CHART ─ */
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-item{display:flex;flex-direction:column;gap:3px;}
+.bar-label-row{display:flex;justify-content:space-between;align-items:center;}
+.bar-lbl{font-size:.76rem;font-weight:500;color:var(--text2);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.bar-count{font-size:.76rem;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace;}
+.bar-track{height:8px;background:var(--off);border-radius:100px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.b-blue{background:linear-gradient(90deg,var(--blue),var(--blue2));}
+.b-green{background:linear-gradient(90deg,var(--green),#00e0a8);}
+.b-amber{background:linear-gradient(90deg,var(--amber),#ffcd5e);}
+.b-purple{background:linear-gradient(90deg,var(--purple),#a78bfa);}
+.b-cyan{background:linear-gradient(90deg,var(--cyan),#66e8ff);}
+
+/* ─ DONUT ─ */
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-svg{flex-shrink:0;}
+.donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;}
+.dl-item{display:flex;align-items:center;gap:8px;font-size:.78rem;}
+.dl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.dl-name{color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dl-pct{font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace;font-size:.75rem;}
+
+/* ─ TIMELINE ─ */
+.timeline-wrap{overflow-x:auto;}
+.timeline-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:4px;}
+.tb-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:28px;}
+.tb-bar{width:100%;border-radius:4px 4px 0 0;background:var(--blue);opacity:.8;min-height:4px;transition:height .5s ease;}
+.tb-lbl{font-size:.6rem;color:var(--muted);white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.tb-val{font-size:.65rem;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace;}
+
+/* ─ TABLE ─ */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead tr{background:rgba(59,71,212,.05);}
+th{padding:9px 12px;text-align:left;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text2);white-space:nowrap;border-bottom:1px solid var(--border);}
+td{padding:9px 12px;color:var(--text);border-bottom:1px solid rgba(59,71,212,.06);vertical-align:top;}
+tr:hover td{background:rgba(59,71,212,.03);}
+.badge{display:inline-flex;font-size:.68rem;font-weight:700;padding:2px 8px;
+  border-radius:100px;white-space:nowrap;}
+.bdg-blue{background:rgba(59,71,212,.1);color:var(--blue);}
+.bdg-green{background:rgba(0,200,150,.1);color:#00a87a;}
+.bdg-amber{background:rgba(245,166,35,.12);color:#c07800;}
+
+/* ─ FILTERS ─ */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-input{font-family:'Outfit',sans-serif;font-size:.82rem;padding:7px 13px;
+  border:1.5px solid var(--border2);border-radius:8px;background:#fff;color:var(--text);
+  outline:none;transition:border-color .2s;}
+.filter-input:focus{border-color:var(--blue);}
+.filter-select{appearance:none;padding-right:28px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238892c8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;}
+.result-count{font-size:.78rem;color:var(--muted);margin-left:auto;}
+
+/* ─ RECORD DETAIL ─ */
+.detail-modal{display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(13,18,64,.6);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;}
+.detail-modal.show{display:flex;}
+.detail-box{background:#fff;border-radius:var(--radius);max-width:680px;width:100%;
+  max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(13,18,64,.25);}
+.detail-head{padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;
+  position:sticky;top:0;background:#fff;z-index:1;}
+.detail-head h3{font-size:1.1rem;font-weight:800;color:var(--navy);}
+.detail-close{font-size:1.4rem;color:var(--muted);cursor:pointer;
+  background:none;border:none;padding:0 4px;line-height:1;}
+.detail-close:hover{color:var(--navy);}
+.detail-body{padding:20px 24px;}
+.detail-sec{margin-bottom:16px;}
+.detail-sec-title{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:8px;}
+.detail-rows{display:flex;flex-direction:column;gap:4px;}
+.detail-row{display:grid;grid-template-columns:150px 1fr;gap:8px;font-size:.83rem;
+  padding:5px 8px;border-radius:7px;}
+.detail-row:nth-child(even){background:rgba(59,71,212,.03);}
+.detail-row dt{color:var(--text2);font-weight:500;}
+.detail-row dd{color:var(--text);font-weight:500;word-break:break-word;}
+
+/* ─ EMPTY ─ */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .ei{font-size:3rem;margin-bottom:1rem;}
+.empty-state h3{font-size:1.1rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;}
+.empty-state p{font-size:.85rem;line-height:1.6;}
+
+/* ─ LOADING ─ */
+.loading-state{text-align:center;padding:50px;color:var(--muted);}
+.spin{width:32px;height:32px;border:3px solid rgba(59,71,212,.2);border-top-color:var(--blue);
+  border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+  .topbar{padding:14px 16px;}
+  .content{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ─ SIDEBAR ─ -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-circle">P</div>
+      <div class="sb-logo-text">
+        <div class="nm">Protipark</div>
+        <div class="sub">Create Dashboard</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Analytics</div>
+      <a class="sb-item active" onclick="showView('overview')" href="#">
+        <span class="ico">📊</span> Resumen General
+      </a>
+      <a class="sb-item" onclick="showView('protos')" href="#">
+        <span class="ico">🔌</span> Protocolos
+      </a>
+      <a class="sb-item" onclick="showView('conectividad')" href="#">
+        <span class="ico">☁️</span> Conectividad
+      </a>
+      <a class="sb-item" onclick="showView('sectores')" href="#">
+        <span class="ico">🏭</span> Sectores / Tipos
+      </a>
+      <div class="sb-section">Datos</div>
+      <a class="sb-item" onclick="showView('solicitudes')" href="#">
+        <span class="ico">📋</span> Solicitudes
+      </a>
+      <a class="sb-item" onclick="showView('exportar')" href="#">
+        <span class="ico">📥</span> Exportar Datos
+      </a>
+    </nav>
+    <div class="sb-footer">
+      <a href="protipark-cotizacion-v3.html">← Ir al formulario</a>
+    </div>
+  </aside>
+
+  <!-- ─ MAIN ─ -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="view-title">Resumen General</h1>
+      <div class="topbar-right">
+        <span class="tb-badge" id="last-updated">Actualizando…</span>
+        <button class="tb-btn tb-outline" onclick="loadData()">↻ Actualizar</button>
+        <button class="tb-btn tb-primary" onclick="exportAll()">📊 Exportar Excel</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ LOADING ══ -->
+      <div id="loading-view" style="display:block">
+        <div class="loading-state">
+          <div class="spin"></div>
+          <p>Cargando datos…</p>
+        </div>
+      </div>
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="view" id="view-overview">
+        <div class="kpi-grid">
+          <div class="kpi kpi-accent">
+            <div class="kpi-label">📋 Total Solicitudes</div>
+            <div class="kpi-val" id="kpi-total">0</div>
+            <div class="kpi-sub">Formularios completados</div>
+          </div>
+          <div class="kpi kpi-green">
+            <div class="kpi-label">📅 Hoy</div>
+            <div class="kpi-val" id="kpi-today">0</div>
+            <div class="kpi-sub">Nuevas solicitudes</div>
+          </div>
+          <div class="kpi kpi-amber">
+            <div class="kpi-label">🏭 Sector Top</div>
+            <div class="kpi-val" id="kpi-top-sector" style="font-size:1rem;padding-top:6px">—</div>
+            <div class="kpi-sub" id="kpi-top-sector-pct">—</div>
+          </div>
+          <div class="kpi kpi-purple">
+            <div class="kpi-label">🔌 Protocolo Top</div>
+            <div class="kpi-val" id="kpi-top-proto" style="font-size:1rem;padding-top:6px">—</div>
+            <div class="kpi-sub" id="kpi-top-proto-pct">—</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="cc-title"><span>📅</span> Solicitudes por Día (últimas 2 semanas)</div>
+            <div class="timeline-wrap"><div class="timeline-bars" id="timeline-bars"></div></div>
+          </div>
+          <div class="chart-card">
+            <div class="cc-title"><span>⏱️</span> Urgencia / Deadline</div>
+            <div class="bar-list" id="chart-deadlines"></div>
+          </div>
+          <div class="chart-card">
+            <div class="cc-title"><span>💰</span> Presupuesto Orientativo</div>
+            <div class="bar-list" id="chart-presupuestos"></div>
+          </div>
+          <div class="chart-card">
+            <div class="cc-title"><span>📦</span> Cantidad Estimada</div>
+            <div class="bar-list" id="chart-cantidades"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PROTOCOLOS ══ -->
+      <div class="view" id="view-protos">
+        <div class="charts-grid">
+          <div class="chart-card full">
+            <div class="cc-title"><span>🔌</span> Protocolos de Campo Más Solicitados</div>
+            <div class="bar-list" id="chart-protocolos"></div>
+          </div>
+          <div class="chart-card full">
+            <div class="cc-title"><span>☁️</span> Protocolos de Conectividad WAN</div>
+            <div class="bar-list" id="chart-wan"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CONECTIVIDAD ══ -->
+      <div class="view" id="view-conectividad">
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="cc-title"><span>🌐</span> Plataforma / Broker Destino</div>
+            <div class="bar-list" id="chart-plataformas"></div>
+          </div>
+          <div class="chart-card">
+            <div class="cc-title"><span>📡</span> Backhaul WAN (distribución)</div>
+            <div id="donut-wan"></div>
+          </div>
+          <div class="chart-card full">
+            <div class="cc-title"><span>⚙️</span> Funciones de Firmware Requeridas</div>
+            <div class="bar-list" id="chart-fw"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SECTORES ══ -->
+      <div class="view" id="view-sectores">
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="cc-title"><span>🏭</span> Sectores Industriales</div>
+            <div id="donut-sectores"></div>
+          </div>
+          <div class="chart-card">
+            <div class="cc-title"><span>💡</span> Tipos de Proyecto</div>
+            <div class="bar-list" id="chart-tipos"></div>
+          </div>
+          <div class="chart-card full">
+            <div class="cc-title"><span>🌎</span> Ubicaciones / Países</div>
+            <div class="bar-list" id="chart-paises"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SOLICITUDES ══ -->
+      <div class="view" id="view-solicitudes">
+        <div class="filters">
+          <input type="text" class="filter-input" id="search-input" placeholder="🔍 Buscar empresa, dispositivo, contacto…" oninput="filterTable()">
+          <select class="filter-input filter-select" id="filter-sector" onchange="filterTable()">
+            <option value="">Todos los sectores</option>
+          </select>
+          <select class="filter-input filter-select" id="filter-deadline" onchange="filterTable()">
+            <option value="">Todos los deadlines</option>
+          </select>
+          <span class="result-count" id="result-count">0 solicitudes</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Dispositivo</th>
+                <th>Empresa</th>
+                <th>Sector</th>
+                <th>Deadline</th>
+                <th>Presupuesto</th>
+                <th>Fecha</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="solicitudes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══ EXPORTAR ══ -->
+      <div class="view" id="view-exportar">
+        <div class="chart-card" style="max-width:520px">
+          <div class="cc-title"><span>📥</span> Exportar Base de Datos</div>
+          <p style="font-size:.85rem;color:var(--text2);margin-bottom:18px;line-height:1.6">
+            Descarga todas las solicitudes y estadísticas en formato Excel con múltiples hojas de análisis.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="tb-btn tb-primary" style="width:100%;justify-content:center;font-size:.95rem;padding:12px" onclick="exportAll()">
+              📊 Exportar todo (Solicitudes + Analytics)
+            </button>
+            <button class="tb-btn tb-outline" style="width:100%;justify-content:center" onclick="exportFiltered()">
+              📋 Exportar vista actual (filtrada)
+            </button>
+            <button class="tb-btn" style="width:100%;justify-content:center;background:rgba(232,64,64,.1);color:var(--red);border:1.5px solid rgba(232,64,64,.25)" onclick="clearDB()">
+              🗑️ Limpiar base de datos
+            </button>
+          </div>
+          <div style="margin-top:18px;padding:12px 14px;background:rgba(59,71,212,.05);border-radius:9px;font-size:.8rem;color:var(--text2);">
+            <strong style="color:var(--blue)">Total en base de datos:</strong> <span id="export-total">0</span> solicitudes<br>
+            <strong style="color:var(--blue)">Última solicitud:</strong> <span id="export-last">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="detail-modal" id="detail-modal">
+  <div class="detail-box">
+    <div class="detail-head">
+      <div>
+        <h3 id="modal-title">Solicitud</h3>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px" id="modal-sub"></div>
+      </div>
+      <button class="detail-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="detail-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let allRecords = [], stats = {}, filteredRecords = [];
+const COLORS = ['#3b47d4','#00c896','#f5a623','#8b5cf6','#00d4ff','#e84040','#10b981','#f97316'];
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const VIEW_TITLES = {
+  overview:'Resumen General',
+  protos:'Protocolos de Campo',
+  conectividad:'Conectividad y Firmware',
+  sectores:'Sectores e Industrias',
+  solicitudes:'Base de Solicitudes',
+  exportar:'Exportar Datos'
+};
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  const v = document.getElementById('view-'+name);
+  if (v) v.classList.add('active');
+  const items = document.querySelectorAll('.sb-item');
+  items.forEach(i=>{ if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes(name)) i.classList.add('active'); });
+  document.getElementById('view-title').textContent = VIEW_TITLES[name]||name;
+  document.getElementById('loading-view').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════
+async function loadData() {
+  document.getElementById('loading-view').style.display = 'block';
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+
+  try {
+    let records = [];
+    try {
+      const res = await window.storage.get('prot_requests', true);
+      if (res && res.value) records = JSON.parse(res.value);
+    } catch(e) { records = []; }
+
+    // If no real data, inject demo records for visual purposes
+    if (records.length === 0) {
+      records = generateDemoData();
+      // Save demo data
+      try { await window.storage.set('prot_requests', JSON.stringify(records), true); } catch(e){}
+    }
+
+    allRecords = records;
+    filteredRecords = [...records];
+
+    // Build stats from records
+    stats = buildStats(records);
+
+    // Update last-updated
+    document.getElementById('last-updated').textContent =
+      'Actualizado: ' + new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+
+    renderAll();
+    document.getElementById('loading-view').style.display = 'none';
+    showView('overview');
+
+  } catch(e) {
+    document.getElementById('loading-view').innerHTML =
+      '<div class="empty-state"><div class="ei">⚠️</div><h3>Error al cargar datos</h3><p>'+e.message+'</p></div>';
+  }
+}
+
+function buildStats(records) {
+  const s = {
+    total: records.length,
+    sectors:{}, tipos:{}, protocolos:{}, wan:{}, presupuestos:{},
+    deadlines:{}, paises:{}, plataformas:{}, fw_funcs:{}, cantidades:{},
+    byDay:{}
+  };
+  records.forEach(r => {
+    tally(s.sectors, r.sector);
+    tally(s.tipos, r.tipo_proyecto);
+    tally(s.presupuestos, r.presupuesto);
+    tally(s.deadlines, r.deadline);
+    tally(s.cantidades, r.cantidad);
+    if (r.plataforma) tally(s.plataformas, r.plataforma);
+    if (r.protocolos_campo) r.protocolos_campo.split(',').forEach(p=>{const t=p.trim();if(t)tally(s.protocolos,t);});
+    if (r.wan) r.wan.split(',').forEach(w=>{const t=w.trim();if(t)tally(s.wan,t);});
+    if (r.protocolo_nube) r.protocolo_nube.split(',').forEach(p=>{const t=p.trim();if(t)tally(s.wan,t);});
+    if (r.fw_funcs) r.fw_funcs.split(',').forEach(f=>{const t=f.trim();if(t)tally(s.fw_funcs,t);});
+    if (r.ubicacion) {
+      const parts = r.ubicacion.split(',');
+      tally(s.paises, parts[parts.length-1].trim()||r.ubicacion);
+    }
+    // By day
+    const day = (r.timestamp||new Date().toISOString()).slice(0,10);
+    tally(s.byDay, day);
+  });
+  return s;
+}
+
+function tally(obj,key){ if(!key||key==='')return; obj[key]=(obj[key]||0)+1; }
+
+// ═══════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════
+function renderAll() {
+  renderKPIs();
+  renderTimeline();
+  renderBarChart('chart-deadlines', stats.deadlines, 'b-amber', 5);
+  renderBarChart('chart-presupuestos', stats.presupuestos, 'b-purple', 6);
+  renderBarChart('chart-cantidades', stats.cantidades, 'b-green', 5);
+  renderBarChart('chart-protocolos', stats.protocolos, 'b-blue', 12);
+  renderBarChart('chart-wan', stats.wan, 'b-cyan', 10);
+  renderBarChart('chart-tipos', stats.tipos, 'b-blue', 8);
+  renderBarChart('chart-paises', stats.paises, 'b-green', 8);
+  renderBarChart('chart-fw', stats.fw_funcs, 'b-purple', 8);
+  renderBarChart('chart-plataformas', stats.plataformas, 'b-cyan', 6);
+  renderDonut('donut-sectores', stats.sectors, 6);
+  renderDonut('donut-wan', stats.wan, 6);
+  renderTable();
+  populateFilters();
+  document.getElementById('export-total').textContent = allRecords.length;
+  if (allRecords.length > 0) {
+    const last = allRecords[allRecords.length-1];
+    document.getElementById('export-last').textContent =
+      new Date(last.timestamp||Date.now()).toLocaleDateString('es-CO');
+  }
+}
+
+function renderKPIs() {
+  document.getElementById('kpi-total').textContent = stats.total;
+  // Today count
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('kpi-today').textContent = stats.byDay[today]||0;
+  // Top sector
+  const topSector = topKey(stats.sectors);
+  if (topSector) {
+    document.getElementById('kpi-top-sector').textContent = topSector.slice(0,22);
+    document.getElementById('kpi-top-sector-pct').textContent =
+      Math.round(stats.sectors[topSector]/stats.total*100)+'% del total';
+  }
+  // Top protocol
+  const topProto = topKey(stats.protocolos);
+  if (topProto) {
+    document.getElementById('kpi-top-proto').textContent = topProto.slice(0,20);
+    document.getElementById('kpi-top-proto-pct').textContent =
+      stats.protocolos[topProto]+' solicitudes';
+  }
+}
+
+function topKey(obj) {
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0];
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timeline-bars');
+  if (!el) return;
+  // Last 14 days
+  const days = [];
+  for (let i=13; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  const max = Math.max(...days.map(d=>stats.byDay[d]||0), 1);
+  el.innerHTML = days.map(d => {
+    const count = stats.byDay[d]||0;
+    const h = Math.max(count/max*90, count>0?6:2);
+    const lbl = d.slice(5); // MM-DD
+    return `<div class="tb-col">
+      ${count>0?`<div class="tb-val">${count}</div>`:''}
+      <div class="tb-bar" style="height:${h}px;${count===0?'opacity:.3':''}"></div>
+      <div class="tb-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBarChart(containerId, data, colorClass, maxItems=8) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const sorted = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,maxItems);
+  if (sorted.length === 0) { el.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px">Sin datos aún</div>'; return; }
+  const max = sorted[0][1];
+  el.innerHTML = sorted.map(([k,v]) => `
+    <div class="bar-item">
+      <div class="bar-label-row">
+        <span class="bar-lbl">${k}</span>
+        <span class="bar-count">${v}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill ${colorClass}" style="width:${Math.round(v/max*100)}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderDonut(containerId, data, maxSlices=6) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const sorted = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,maxSlices);
+  if (sorted.length===0) { el.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px">Sin datos aún</div>'; return; }
+  const total = sorted.reduce((s,[,v])=>s+v,0);
+  // Build SVG donut
+  const R=52, r=34, cx=60, cy=60;
+  let startAngle = -Math.PI/2;
+  const slices = sorted.map(([k,v],i) => {
+    const angle = (v/total)*Math.PI*2;
+    const x1=cx+R*Math.cos(startAngle), y1=cy+R*Math.sin(startAngle);
+    startAngle += angle;
+    const x2=cx+R*Math.cos(startAngle), y2=cy+R*Math.sin(startAngle);
+    const x3=cx+r*Math.cos(startAngle), y3=cy+r*Math.sin(startAngle);
+    const sa = startAngle-angle;
+    const x4=cx+r*Math.cos(sa), y4=cy+r*Math.sin(sa);
+    const largeArc = angle > Math.PI ? 1 : 0;
+    const d = `M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc} 1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${r},${r} 0 ${largeArc} 0 ${x4.toFixed(1)},${y4.toFixed(1)} Z`;
+    return {d, color:COLORS[i%COLORS.length], k, v};
+  });
+  const svg = `<svg width="120" height="120" viewBox="0 0 120 120" class="donut-svg">
+    ${slices.map(s=>`<path d="${s.d}" fill="${s.color}" opacity=".88"/>`).join('')}
+    <circle cx="${cx}" cy="${cy}" r="22" fill="white"/>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dy=".35em" font-family="JetBrains Mono" font-size="13" font-weight="700" fill="#0d1240">${total}</text>
+  </svg>`;
+  const legend = sorted.map(([k,v],i)=>`
+    <div class="dl-item">
+      <div class="dl-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <span class="dl-name">${k}</span>
+      <span class="dl-pct">${Math.round(v/total*100)}%</span>
+    </div>`).join('');
+  el.innerHTML = `<div class="donut-wrap">${svg}<div class="donut-legend">${legend}</div></div>`;
+}
+
+// ═══════════════════════════════════════════
+// TABLE
+// ═══════════════════════════════════════════
+function renderTable(records) {
+  const data = records || filteredRecords;
+  const tbody = document.getElementById('solicitudes-tbody');
+  if (!tbody) return;
+  document.getElementById('result-count').textContent = data.length + ' solicitudes';
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="ei">📭</div><h3>Sin solicitudes</h3><p>Aún no hay datos o ningún resultado coincide con los filtros.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.slice().reverse().map((r,i) => {
+    const date = new Date(r.timestamp||Date.now()).toLocaleDateString('es-CO');
+    const deadline = r.deadline||'—';
+    const urgBadge = deadline.includes('semana')||deadline.includes('Urgente')
+      ? 'bdg-amber' : 'bdg-blue';
+    return `<tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted)">${r.id||'—'}</span></td>
+      <td style="font-weight:600;color:var(--blue)">${r.device_name||'—'}</td>
+      <td>${r.empresa||'—'}</td>
+      <td><span class="badge bdg-green">${(r.sector||'—').slice(0,24)}</span></td>
+      <td><span class="badge ${urgBadge}">${deadline.slice(0,22)}</span></td>
+      <td style="font-size:.78rem">${(r.presupuesto||'—').slice(0,22)}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${date}</td>
+      <td><button onclick="showDetail(${allRecords.indexOf(r)})" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:.82rem;font-weight:600;padding:3px 6px;border-radius:6px;transition:background .2s" onmouseover="this.style.background='rgba(59,71,212,.08)'" onmouseout="this.style.background='none'">Ver →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function populateFilters() {
+  const sectorSel = document.getElementById('filter-sector');
+  const sectors = [...new Set(allRecords.map(r=>r.sector).filter(Boolean))];
+  sectorSel.innerHTML = '<option value="">Todos los sectores</option>' +
+    sectors.map(s=>`<option>${s}</option>`).join('');
+
+  const dlSel = document.getElementById('filter-deadline');
+  const dls = [...new Set(allRecords.map(r=>r.deadline).filter(Boolean))];
+  dlSel.innerHTML = '<option value="">Todos los deadlines</option>' +
+    dls.map(d=>`<option>${d}</option>`).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const sec = document.getElementById('filter-sector').value;
+  const dl = document.getElementById('filter-deadline').value;
+  filteredRecords = allRecords.filter(r => {
+    const txt = [r.empresa,r.device_name,r.ct_nombre,r.ct_email,r.ubicacion].join(' ').toLowerCase();
+    return (!q||txt.includes(q)) && (!sec||r.sector===sec) && (!dl||r.deadline===dl);
+  });
+  renderTable(filteredRecords);
+}
+
+// ═══════════════════════════════════════════
+// DETAIL MODAL
+// ═══════════════════════════════════════════
+function showDetail(idx) {
+  const r = allRecords[idx];
+  if (!r) return;
+  document.getElementById('modal-title').textContent = r.device_name||'Solicitud';
+  document.getElementById('modal-sub').textContent = (r.empresa||'') + ' · ' + new Date(r.timestamp||Date.now()).toLocaleString('es-CO');
+  const secs = [
+    {t:'📋 Proyecto', rows:[['Empresa',r.empresa],['Sector',r.sector],['Tipo',r.tipo_proyecto],['Contacto',r.ct_nombre],['Cargo',r.ct_cargo],['Correo',r.ct_email],['Teléfono',r.ct_tel],['Ubicación',r.ubicacion],['Deadline',r.deadline],['Cantidad',r.cantidad]]},
+    {t:'🎯 Caso de Uso', rows:[['Problema',r.problema],['Qué mide',r.que_medir],['Frecuencia',r.frecuencia],['Criterio éxito',r.criterio]]},
+    {t:'🔌 Interfaces', rows:[['Protocolos',r.protocolos_campo],['Puertos',r.puertos],['Equipos',r.equipos],['Aislamiento',r.aislamiento]]},
+    {t:'☁️ Conectividad', rows:[['WAN',r.wan],['Protocolo nube',r.protocolo_nube],['Plataforma',r.plataforma],['Firmware',r.fw_funcs]]},
+    {t:'🏭 Ambiente', rows:[['Lugar',r.lugar],['IP Rating',r.ip_rating],['Temp.',r.temperatura],['Fuente',r.fuente],['Presupuesto',r.presupuesto],['Alcance',r.alcance]]},
+  ];
+  document.getElementById('modal-body').innerHTML = secs.map(s=>`
+    <div class="detail-sec">
+      <div class="detail-sec-title">${s.t}</div>
+      <dl class="detail-rows">${s.rows.filter(r=>r[1]).map(r=>`
+        <div class="detail-row"><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}
+      </dl>
+    </div>`).join('');
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('detail-modal').classList.remove('show');
+}
+
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
+function exportAll() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: All solicitudes
+  const headers = ['ID','Dispositivo','Solicitante','Empresa','Sector','Tipo Proyecto',
+    'Contacto','Cargo','Correo','Teléfono','Ubicación','Deadline','Cantidad',
+    'Problema','Protocolos Campo','Puertos','WAN','Protocolo Nube','Plataforma',
+    'Firmware','Presupuesto','Alcance','Fecha'];
+  const rows = allRecords.map(r=>[
+    r.id,r.device_name,r.user_name,r.empresa,r.sector,r.tipo_proyecto,
+    r.ct_nombre,r.ct_cargo,r.ct_email,r.ct_tel,r.ubicacion,r.deadline,r.cantidad,
+    r.problema,r.protocolos_campo,r.puertos,r.wan,r.protocolo_nube,r.plataforma,
+    r.fw_funcs,r.presupuesto,r.alcance,
+    r.timestamp?new Date(r.timestamp).toLocaleString('es-CO'):''
+  ]);
+  const ws1 = XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws1['!cols'] = headers.map((_,i)=>({wch:[8,18,14,20,22,18,16,14,28,16,18,16,14,50,30,28,24,30,18,30,22,30,18][i]||15}));
+  XLSX.utils.book_append_sheet(wb, ws1, 'Solicitudes');
+
+  // Sheet 2: Stats
+  const statRows = [
+    ['PROTIPARK CREATE — ANALYTICS', '', ''],
+    ['Generado', new Date().toLocaleString('es-CO'), ''],
+    ['Total solicitudes', allRecords.length, ''],
+    ['','',''],
+    ['PROTOCOLOS MÁS SOLICITADOS','Solicitudes',''],
+    ...Object.entries(stats.protocolos).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,'']),
+    ['','',''],
+    ['SECTORES','Solicitudes',''],
+    ...Object.entries(stats.sectors).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,'']),
+    ['','',''],
+    ['BACKHAUL WAN','Solicitudes',''],
+    ...Object.entries(stats.wan).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,'']),
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(statRows);
+  ws2['!cols'] = [{wch:35},{wch:15},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Analytics');
+
+  XLSX.writeFile(wb, `Protipark_Dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportFiltered() {
+  const wb = XLSX.utils.book_new();
+  const headers = ['ID','Dispositivo','Empresa','Sector','Deadline','Presupuesto','Fecha'];
+  const rows = filteredRecords.map(r=>[r.id,r.device_name,r.empresa,r.sector,r.deadline,r.presupuesto,
+    r.timestamp?new Date(r.timestamp).toLocaleString('es-CO'):'']);
+  const ws = XLSX.utils.aoa_to_sheet([headers,...rows]);
+  XLSX.utils.book_append_sheet(wb, ws, 'Filtrado');
+  XLSX.writeFile(wb, `Protipark_Filtrado_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+async function clearDB() {
+  if (!confirm('¿Estás seguro de que quieres eliminar TODOS los datos de la base de datos? Esta acción no se puede deshacer.')) return;
+  try {
+    await window.storage.set('prot_requests', '[]', true);
+    await window.storage.set('prot_stats', '{}', true);
+    allRecords = []; filteredRecords = []; stats = buildStats([]);
+    renderAll();
+    alert('Base de datos limpiada. Se cargarán datos de demo.');
+    setTimeout(loadData, 500);
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ═══════════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════════
+function generateDemoData() {
+  const companies = ['Celsia S.A.','Enerbit SAS','EPM Generación','ISAGEN','Enel Colombia','TGS Colombia','Cementos Argos','Alpina','Bavaria SA','Postobón'];
+  const devices = ['PowerGate R1','MeterBit Pro','SolarEdge V2','ControlNode X1','DataBridge 4G','EnergyHub IoT','FieldSense 485','CloudGate Pro','AlphaLogger','RTUMaster'];
+  const sectors = ['Energía Solar / Fotovoltaica','Utilities / Distribución Eléctrica','Automatización Industrial','Oil & Gas','Edificios Inteligentes / BMS','Agricultura / AgroTech'];
+  const protos = ['RS-485 / Modbus RTU','DLMS/COSEM','Modbus TCP/IP','DNP3','DI/DO Digitales','AI/AO Analógicas (4-20mA)','IEC 61850','CAN Bus'];
+  const wan = ['4G/LTE','Ethernet (RJ45)','WiFi 2.4/5GHz','LTE-M / NB-IoT','LoRa/LoRaWAN'];
+  const tipos = ['IoT Industrial (IIoT)','Industria 4.0','Gateway / Concentrador de Datos','Sistema Fotovoltaico / MPPT','Gestión de Energía (EMS/BMS)','SCADA / HMI / RTU'];
+  const deadlines = ['Urgente — esta semana','1 a 2 semanas','1 mes','2 a 3 meses','Q3 2026'];
+  const presupuestos = ['$1,500 – $3,000 USD','$3,000 – $5,000 USD','$5,000 – $10,000 USD','$10,000 – $25,000 USD','$500 – $1,500 USD'];
+  const ciudades = ['Medellín, Colombia','Bogotá, Colombia','Cali, Colombia','Barranquilla, Colombia','Bucaramanga, Colombia'];
+
+  const records = [];
+  for (let i=0; i<18; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - Math.floor(Math.random()*20));
+    d.setHours(Math.floor(Math.random()*9)+8);
+    const numProtos = 1+Math.floor(Math.random()*3);
+    const shuffledProtos = [...protos].sort(()=>Math.random()-.5).slice(0,numProtos);
+    const numWan = 1+Math.floor(Math.random()*2);
+    const shuffledWan = [...wan].sort(()=>Math.random()-.5).slice(0,numWan);
+    records.push({
+      id:'REQ-'+Math.random().toString(36).slice(2,8).toUpperCase(),
+      timestamp:d.toISOString(),
+      device_name: devices[i%devices.length],
+      user_name: 'Ing. Demo',
+      empresa: companies[i%companies.length],
+      sector: sectors[i%sectors.length],
+      tipo_proyecto: tipos[i%tipos.length],
+      ct_nombre: 'Ing. Demo ' + (i+1),
+      ct_cargo: 'Ingeniero de Proyectos',
+      ct_email: `demo${i+1}@protipark.com`,
+      ct_tel: '+57 300 000 000' + i,
+      ubicacion: ciudades[i%ciudades.length],
+      deadline: deadlines[i%deadlines.length],
+      cantidad: ['Piloto (1–10 unidades)','Serie pequeña (10–100)','Serie media (100–1,000)'][i%3],
+      problema: 'Monitoreo y control remoto de equipos industriales mediante dispositivo IoT personalizado.',
+      protocolos_campo: shuffledProtos.join(', '),
+      wan: shuffledWan.join(', '),
+      protocolo_nube: ['MQTT 3.1.1','MQTT + TLS/mTLS','HTTP/REST API'][i%3],
+      plataforma: ['AWS IoT Core','ThingsBoard','Mosquitto / Broker propio','Azure IoT Hub'][i%4],
+      fw_funcs: 'Recolección de datos, Buffer offline (almacenamiento local), Actualización OTA remota',
+      presupuesto: presupuestos[i%presupuestos.length],
+      alcance: 'Diseño hardware (PCB + esquemáticos), Firmware embebido, Documentación técnica',
+      ip_rating: ['IP54 — Polvo + salpicaduras','IP65 — Polvo total + chorro','IP20 — Interior limpio'][i%3],
+      fuente: ['220 VAC / 60Hz','24 VDC','12 VDC'][i%3],
+    });
+  }
+  return records;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  // Add small delay so storage is ready
+  setTimeout(loadData, 400);
+});
+
+// Refresh every 60 seconds
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>

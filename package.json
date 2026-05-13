@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "node build.js --watch",
     "build": "node build.js",
+    "build:pages": "node build.js --output .",
+    "deploy": "npm run build:pages",
     "preview": "python -m http.server 3000 --directory dist"
   },
   "keywords": [

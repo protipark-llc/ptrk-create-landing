@@ -6,7 +6,7 @@
 <title>Protipark Create — Cotización</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/index.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root{
   --navy:#0d1240;--navy2:#161b55;--blue:#3b47d4;--blue2:#4f5ce0;
@@ -1266,7 +1266,42 @@ const PORT_PROTOS={
 };
 
 // ═══ EMAILJS INIT ═══
-emailjs.init('qiRwYcmh4_C7oSgYN');
+(function(){
+  function initEmailJS() {
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init('qiRwYcmh4_C7oSgYN');
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+    script.onload = () => {
+      if (typeof emailjs !== 'undefined') {
+        emailjs.init('qiRwYcmh4_C7oSgYN');
+      } else {
+        console.error('EmailJS cargado, pero la variable global no está disponible.');
+      }
+    };
+    script.onerror = () => console.error('No se pudo cargar EmailJS desde el CDN.');
+    document.head.appendChild(script);
+  }
+
+  initEmailJS();
+
+  if (!window.storage) {
+    window.storage = {
+      async get(key) {
+        return { value: localStorage.getItem(key) };
+      },
+      async set(key, value) {
+        localStorage.setItem(key, value);
+        return { value };
+      },
+      async remove(key) {
+        localStorage.removeItem(key);
+      }
+    };
+  }
+})();
 
 // ═══ PAGE TRANSITIONS ═══
 function showForm() {
@@ -1500,21 +1535,27 @@ async function submitForm() {
   await saveDB(FD);
 
   // Send email with complete summary
+  const emailParams = {
+    to_email: 'ceo@protipark.com',
+    subject: `Nueva solicitud: ${FD.device_name} (${FD.id})`,
+    message: buildSummaryText(),
+    device_name: FD.device_name,
+    user_name: FD.user_name,
+    company: FD.empresa,
+    contact_email: FD.ct_email,
+    contact_phone: FD.ct_tel,
+    request_id: FD.id
+  };
+
   try {
-    await emailjs.send('service_rea22om', 'template_protipark_001', {
-      to_email: 'ceo@protipark.com',
-      subject: `Nueva solicitud: ${FD.device_name} (${FD.id})`,
-      message: buildSummaryText(),
-      device_name: FD.device_name,
-      user_name: FD.user_name,
-      company: FD.empresa,
-      contact_email: FD.ct_email,
-      contact_phone: FD.ct_tel,
-      request_id: FD.id
-    });
+    if (typeof emailjs === 'undefined') {
+      throw new Error('EmailJS no está disponible. Verifica la carga del script.');
+    }
+    await emailjs.send('service_rea22om', 'template_protipark_001', emailParams);
     console.log('Email enviado exitosamente');
   } catch (error) {
     console.error('Error enviando email:', error);
+    alert('No se pudo enviar el correo. Revisa la consola del navegador para más detalles.');
   }
 
   // Hide form panels, show success briefly then auto-go to render

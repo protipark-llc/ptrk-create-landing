@@ -6,7 +6,7 @@
 <title>Protipark Create — Cotización</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/index.min.js"></script>
 <style>
 :root{
   --navy:#0d1240;--navy2:#161b55;--blue:#3b47d4;--blue2:#4f5ce0;
@@ -526,7 +526,7 @@ footer a{color:var(--blue);text-decoration:none;}
       <button class="btn-hero-primary" onclick="showForm()">
         Comenzar cotización →
       </button>
-      <a href="protipark-dashboard.html" class="btn-hero-ghost">Ver dashboard</a>
+      <a href="#" class="btn-hero-ghost disabled" aria-disabled="true" onclick="return false;">Ver dashboard</a>
     </div>
     <div class="hero-stats">
       <div class="hstat"><div class="hstat-num">6<span>k+</span></div><div class="hstat-lbl">Smartbits producidos</div></div>
@@ -685,8 +685,36 @@ footer a{color:var(--blue);text-decoration:none;}
               </select>
               <input type="tel" class="pnum" id="ct_tel" placeholder="300 000 0000">
             </div></div>
-          <div class="fg"><div class="lr"><label>Ciudad / País</label></div>
-            <input type="text" id="ubicacion" placeholder="Ej. Medellín, Colombia"></div>
+          <div class="fg"><div class="lr"><label>País</label></div>
+            <select id="pais" onchange="loadCitiesForCountry()">
+              <option value="">Seleccionar país…</option>
+              <option value="CO">🇨🇴 Colombia</option>
+              <option value="MX">🇲🇽 México</option>
+              <option value="AR">🇦🇷 Argentina</option>
+              <option value="PE">🇵🇪 Perú</option>
+              <option value="CL">🇨🇱 Chile</option>
+              <option value="BR">🇧🇷 Brasil</option>
+              <option value="VE">🇻🇪 Venezuela</option>
+              <option value="EC">🇪🇨 Ecuador</option>
+              <option value="ES">🇪🇸 España</option>
+              <option value="US">🇺🇸 Estados Unidos</option>
+              <option value="GB">🇬🇧 Reino Unido</option>
+              <option value="DE">🇩🇪 Alemania</option>
+              <option value="FR">🇫🇷 Francia</option>
+              <option value="IT">🇮🇹 Italia</option>
+              <option value="CA">🇨🇦 Canadá</option>
+              <option value="AU">🇦🇺 Australia</option>
+              <option value="JP">🇯🇵 Japón</option>
+              <option value="IN">🇮🇳 India</option>
+              <option value="SG">🇸🇬 Singapur</option>
+              <option value="OTHER">Otro país…</option>
+            </select></div>
+          <div class="fg" id="city-field" style="display:none"><div class="lr"><label>Ciudad</label></div>
+            <select id="ciudad">
+              <option value="">Seleccionar ciudad…</option>
+            </select></div>
+          <div class="fg" id="city-other-field" style="display:none"><div class="lr"><label>Ciudad</label></div>
+            <input type="text" id="ciudad_otra" placeholder="Escribe tu ciudad"></div>
           <div class="fg"><div class="lr"><label>Deadline</label></div>
             <select id="deadline">
               <option value="">Seleccionar…</option>
@@ -1060,17 +1088,28 @@ footer a{color:var(--blue);text-decoration:none;}
           <div class="fg"><div class="lr"><label>Fuente disponible</label></div>
             <select id="fuente">
               <option value="">Seleccionar…</option>
-              <option>110 VAC</option><option>220 VAC</option>
-              <option>12 VDC</option><option>24 VDC</option><option>48 VDC</option>
-              <option>Batería / Solar</option><option>PoE</option><option>Múltiple</option>
+              <option>110 VAC</option>
+              <option>220 VAC</option>
+              <option>5 VDC</option>
+              <option>12 VDC</option>
+              <option>24 VDC</option>
+              <option>48 VDC</option>
+              <option>Batería / Solar</option>
+              <option>PoE</option>
+              <option>Múltiple</option>
             </select></div>
           <div class="fg"><div class="lr"><label>¿Batería / UPS integrado?</label>
             <span class="tip">i<span class="tip-box">Un UPS integrado permite que el dispositivo cierre transacciones correctamente ante un corte eléctrico.</span></span>
           </div>
             <select id="bateria">
               <option value="">No necesario</option>
-              <option>Sí — minutos</option><option>Sí — horas</option>
-              <option>Sí — solar + carga</option><option>Por definir</option>
+              <option>Li-ion 18650</option>
+              <option>LiPo 3.7V</option>
+              <option>Lead-acid / AGM 12V</option>
+              <option>Alcalina 9V / AA / AAA</option>
+              <option>Batería externa 12V</option>
+              <option>UPS interno</option>
+              <option>Por definir</option>
             </select></div>
           <div class="sep full"><span>Alcance</span></div>
           <div class="fg full"><div class="lr"><label>¿Qué debe incluir la cotización?</label></div>
@@ -1153,45 +1192,61 @@ footer a{color:var(--blue);text-decoration:none;}
 </div><!-- /form-page -->
 
 <!-- ═══════════ RENDER SCREEN ═══════════ -->
-<div class="render-screen" id="render-screen">
-  <div class="render-title-block">
-    <h2>Render de <em id="rdr-dev-name">tu dispositivo</em></h2>
-    <p>Visualización conceptual 3D basada en tus requerimientos</p>
-  </div>
-
-  <div class="render-card">
-    <div class="render-steps" id="rdr-steps">
-      <div class="rstep active" id="rs1"><div class="rstep-ico">◐</div>Analizando protocolos seleccionados…</div>
-      <div class="rstep" id="rs2"><div class="rstep-ico">2</div>Generando topología de puertos…</div>
-      <div class="rstep" id="rs3"><div class="rstep-ico">3</div>Calculando dimensiones del PCB…</div>
-      <div class="rstep" id="rs4"><div class="rstep-ico">4</div>Renderizando modelo 3D…</div>
+      </div>
     </div>
-    <div class="rdr-progress"><div class="rdr-pfill" id="rdr-pfill" style="width:0%"></div></div>
-    <canvas id="threeC"></canvas>
-    <div class="rdr-btns" id="rdr-btns" style="display:none">
-      <button class="rdr-btn on" onclick="setView('pcb')">Sin enclosure (PCB)</button>
-      <button class="rdr-btn" onclick="setView('case')">Con enclosure</button>
-    </div>
-  </div>
-
-  <div class="render-info" id="rdr-info" style="display:none">
-    <div class="rinfo-card">
-      <div class="rinfo-title">Protocolos de campo</div>
-      <div class="rinfo-tags" id="rdr-proto-tags"></div>
-    </div>
-    <div class="rinfo-card">
-      <div class="rinfo-title">Conectividad WAN</div>
-      <div class="rinfo-tags" id="rdr-wan-tags"></div>
-    </div>
-  </div>
-
-  <div class="render-actions">
-    <button class="outl" onclick="downloadExcel()">📊 Descargar Excel</button>
-    <button class="outl" onclick="window.location.reload()">Nueva solicitud</button>
   </div>
 </div>
 
 <script>
+// ═══ COUNTRIES & CITIES ═══
+const countryCities = {
+  'CO': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga'],
+  'MX': ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Cancún', 'Playa del Carmen', 'Veracruz'],
+  'AR': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'San Miguel de Tucumán'],
+  'PE': ['Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Cusco', 'Iquitos'],
+  'CL': ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Temuco', 'Puerto Montt'],
+  'BR': ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte'],
+  'VE': ['Caracas', 'Valencia', 'Maracaibo', 'Barquisimeto', 'Cumaná', 'Mérida'],
+  'EC': ['Quito', 'Guayaquil', 'Cuenca', 'Santo Domingo', 'Esmeraldas', 'Latacunga'],
+  'ES': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza'],
+  'US': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia'],
+  'GB': ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Liverpool'],
+  'DE': ['Berlin', 'Munich', 'Cologne', 'Hamburg', 'Frankfurt', 'Dresden'],
+  'FR': ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes'],
+  'IT': ['Rome', 'Milan', 'Naples', 'Turin', 'Florence', 'Venice'],
+  'CA': ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Winnipeg'],
+  'AU': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Canberra'],
+  'JP': ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya', 'Sapporo', 'Fukuoka'],
+  'IN': ['Delhi', 'Mumbai', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata'],
+  'SG': ['Singapore']
+};
+
+function loadCitiesForCountry() {
+  const countrySelect = document.getElementById('pais');
+  const cityField = document.getElementById('city-field');
+  const cityOtherField = document.getElementById('city-other-field');
+  const citySelect = document.getElementById('ciudad');
+  const selectedCountry = countrySelect.value;
+
+  if (selectedCountry === 'OTHER') {
+    cityField.style.display = 'none';
+    cityOtherField.style.display = 'block';
+  } else if (selectedCountry && countryCities[selectedCountry]) {
+    cityField.style.display = 'block';
+    cityOtherField.style.display = 'none';
+    citySelect.innerHTML = '<option value="">Seleccionar ciudad…</option>';
+    countryCities[selectedCountry].forEach(city => {
+      const opt = document.createElement('option');
+      opt.value = city;
+      opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
+  } else {
+    cityField.style.display = 'none';
+    cityOtherField.style.display = 'none';
+  }
+}
+
 // ═══ STATE ═══
 let cur=0, FD={}, deviceName='el dispositivo', userName='';
 let selectedProtos={}, selectedMCU='', renderMode='pcb';
@@ -1209,6 +1264,9 @@ const PORT_PROTOS={
   ethernetip:['EtherNet/IP','¿Cuántos puertos EtherNet/IP?'],
   pulso:['Pulso / Contador','¿Cuántos canales de pulso?'],
 };
+
+// ═══ EMAILJS INIT ═══
+emailjs.init('qiRwYcmh4_C7oSgYN');
 
 // ═══ PAGE TRANSITIONS ═══
 function showForm() {
@@ -1279,6 +1337,10 @@ function validateStep(s) {
     if(!v('empresa')) {alert('Por favor ingresa el nombre de la empresa.');return false;}
     if(!v('ct_nombre')) {alert('Por favor ingresa el nombre del contacto.');return false;}
     if(!v('ct_email')||!v('ct_email').includes('@')) {alert('Correo electrónico inválido.');return false;}
+    if(!v('pais')) {alert('Por favor selecciona un país.');return false;}
+    const pais = v('pais');
+    if(pais !== 'OTHER' && !v('ciudad')) {alert('Por favor selecciona una ciudad.');return false;}
+    if(pais === 'OTHER' && !v('ciudad_otra')) {alert('Por favor ingresa el nombre de la ciudad.');return false;}
   }
   if(s===2 && !v('problema')) {alert('Por favor describe el problema a resolver.');return false;}
   return true;
@@ -1295,6 +1357,8 @@ function collectStep(s) {
     FD.ct_tel=(v('phone_code')||'')+' '+(v('ct_tel')||'');
     FD.ubicacion=v('ubicacion'); FD.deadline=v('deadline');
     FD.cantidad=rVal('qty');
+    FD.pais=v('pais');
+    FD.ciudad=document.getElementById('pais').value==='OTHER'?v('ciudad_otra'):v('ciudad');
   }
   if(s===2) {
     FD.problema=v('problema'); FD.que_medir=v('que_medir');
@@ -1387,15 +1451,43 @@ function buildSummary() {
   collectStep(6);
   const c=document.getElementById('sum-container');
   const secs=[
-    {t:'📋 Proyecto',rows:[['Dispositivo',FD.device_name],['Solicitante',FD.user_name],['Perfil',FD.perfil],['Empresa',FD.empresa],['Sector',FD.sector],['Tipo',FD.tipo_proyecto],['Contacto',FD.ct_nombre+(FD.ct_cargo?' — '+FD.ct_cargo:'')],['Correo',FD.ct_email],['Teléfono',FD.ct_tel],['Ubicación',FD.ubicacion],['Deadline',FD.deadline],['Cantidad',FD.cantidad]]},
+    {t:'📋 Proyecto',rows:[['Dispositivo',FD.device_name],['Solicitante',FD.user_name],['Perfil',FD.perfil],['Empresa',FD.empresa],['Sector',FD.sector],['Tipo',FD.tipo_proyecto],['País',FD.pais],['Ciudad',FD.ciudad],['Contacto',FD.ct_nombre+(FD.ct_cargo?' — '+FD.ct_cargo:'')],['Correo',FD.ct_email],['Teléfono',FD.ct_tel],['Ubicación',FD.ubicacion],['Deadline',FD.deadline],['Cantidad',FD.cantidad]]},
     {t:'🎯 Caso de Uso',rows:[['Problema',FD.problema],['Qué mide/envía',FD.que_medir],['Frecuencia',FD.frecuencia],['Criterio éxito',FD.criterio]]},
     {t:'🔌 Interfaces',rows:[['Protocolos',FD.protocolos_campo],['Puertos',FD.puertos],['Equipos',FD.equipos],['Aislamiento',FD.aislamiento]]},
     {t:'🧠 MCU / SoC',rows:[['Microcontrolador',FD.mcu],['Otro MCU',FD.mcu_otro]]},
     {t:'☁️ Conectividad',rows:[['WAN',FD.wan],['Protocolo nube',FD.protocolo_nube],['Plataforma',FD.plataforma],['Firmware',FD.fw_funcs]]},
-    {t:'🏭 Ambiente / Alcance',rows:[['Lugar',FD.lugar],['IP Rating',FD.ip_rating],['Temperatura',FD.temperatura],['Fuente',FD.fuente],['Alcance',FD.alcance],['Presupuesto',FD.presupuesto]]}
+    {t:'🏭 Ambiente / Alcance',rows:[['Lugar',FD.lugar],['IP Rating',FD.ip_rating],['Temperatura',FD.temperatura],['Fuente',FD.fuente],['Batería',FD.bateria],['Alcance',FD.alcance],['Presupuesto',FD.presupuesto]]}
   ];
   c.innerHTML=secs.map(s=>`<div class="sum-sec"><div class="sum-title">${s.t}</div>
     <dl class="sum-rows">${s.rows.filter(r=>r[1]).map(r=>`<div class="sum-row"><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}</dl></div>`).join('');
+}
+
+function buildSummaryText() {
+  const ts = new Date().toLocaleString('es-CO');
+  let text = `PROTIPARK CREATE — SOLICITUD DE COTIZACIÓN\n\n`;
+  text += `ID: ${FD.id}\n`;
+  text += `Fecha: ${ts}\n\n`;
+  text += `═══════════════════════════════════════════════\n\n`;
+
+  const secs = [
+    {t:'📋 PROYECTO',rows:[['Dispositivo',FD.device_name],['Solicitante',FD.user_name],['Perfil',FD.perfil],['Empresa',FD.empresa],['Sector',FD.sector],['Tipo',FD.tipo_proyecto],['País',FD.pais],['Ciudad',FD.ciudad],['Contacto',FD.ct_nombre+(FD.ct_cargo?' — '+FD.ct_cargo:'')],['Correo',FD.ct_email],['Teléfono',FD.ct_tel],['Ubicación',FD.ubicacion],['Deadline',FD.deadline],['Cantidad',FD.cantidad]]},
+    {t:'🎯 CASO DE USO',rows:[['Problema',FD.problema],['Qué mide/envía',FD.que_medir],['Frecuencia',FD.frecuencia],['Criterio éxito',FD.criterio]]},
+    {t:'🔌 INTERFACES',rows:[['Protocolos',FD.protocolos_campo],['Puertos',FD.puertos],['Equipos',FD.equipos],['Aislamiento',FD.aislamiento]]},
+    {t:'🧠 MCU / SoC',rows:[['Microcontrolador',FD.mcu],['Otro MCU',FD.mcu_otro]]},
+    {t:'☁️ CONECTIVIDAD',rows:[['WAN',FD.wan],['Protocolo nube',FD.protocolo_nube],['Plataforma',FD.plataforma],['Firmware',FD.fw_funcs]]},
+    {t:'🏭 AMBIENTE / ALCANCE',rows:[['Lugar',FD.lugar],['IP Rating',FD.ip_rating],['Temperatura',FD.temperatura],['Fuente',FD.fuente],['Batería',FD.bateria],['Alcance',FD.alcance],['Presupuesto',FD.presupuesto],['Info adicional',FD.adicional]]}
+  ];
+
+  secs.forEach(s => {
+    text += `${s.t}\n`;
+    text += `─`.repeat(s.t.length) + `\n`;
+    s.rows.filter(r => r[1]).forEach(r => {
+      text += `${r[0]}: ${r[1]}\n`;
+    });
+    text += `\n`;
+  });
+
+  return text;
 }
 
 // ═══ SUBMIT ═══
@@ -1406,6 +1498,25 @@ async function submitForm() {
   FD.timestamp=new Date().toISOString();
   FD.id='REQ-'+Date.now().toString(36).toUpperCase();
   await saveDB(FD);
+
+  // Send email with complete summary
+  try {
+    await emailjs.send('service_rea22om', 'template_protipark_001', {
+      to_email: 'ceo@protipark.com',
+      subject: `Nueva solicitud: ${FD.device_name} (${FD.id})`,
+      message: buildSummaryText(),
+      device_name: FD.device_name,
+      user_name: FD.user_name,
+      company: FD.empresa,
+      contact_email: FD.ct_email,
+      contact_phone: FD.ct_tel,
+      request_id: FD.id
+    });
+    console.log('Email enviado exitosamente');
+  } catch (error) {
+    console.error('Error enviando email:', error);
+  }
+
   // Hide form panels, show success briefly then auto-go to render
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('success').classList.add('show');
@@ -1413,12 +1524,13 @@ async function submitForm() {
   document.querySelector('.stepper').style.display='none';
   document.querySelector('.page-title').style.display='none';
   document.getElementById('dbadge').style.display='none';
-  setTimeout(downloadExcel, 800);
-  // Auto-transition to render after 2.5s
+  // setTimeout(downloadExcel, 800); // Deshabilitado: no forzar descarga de Excel al cliente
+  // Auto-transición completada
   setTimeout(()=>{
-    document.getElementById('form-page').classList.remove('show');
-    document.getElementById('form-page').style.display='none';
-    showRenderScreen();
+    // document.getElementById('form-page').classList.remove('show');
+    // document.getElementById('form-page').style.display='none';
+    // render removido temporalmente
+    // showRenderScreen();
   }, 2500);
 }
 
@@ -1756,6 +1868,8 @@ function downloadExcel(){
     ['Proyecto','Empresa',FD.empresa],
     ['Proyecto','Sector',FD.sector],
     ['Proyecto','Tipo',FD.tipo_proyecto],
+    ['Proyecto','País',FD.pais],
+    ['Proyecto','Ciudad',FD.ciudad],
     ['Proyecto','Contacto',FD.ct_nombre],
     ['Proyecto','Cargo',FD.ct_cargo],
     ['Proyecto','Correo',FD.ct_email],
